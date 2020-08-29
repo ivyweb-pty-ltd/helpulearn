@@ -1,0 +1,67 @@
+Help - Help Extreme Learning Platform
+
+The system is designed to build a learning management system but build from basic principles,
+instead of building a linear course where one activity and assessment follow on each other the system
+will dynamically change the course presentation based on the students ability.
+
+The way it does this are by defining each learning objective as a set of other objectives, and taxonomies.
+
+Each objective consist
+ - required_objectives (Other objectives that must be completed for this objective to be complete)
+ - taxonomies (The knowledge , cognative elements that must be fullfilled for this objective to be completed)
+
+Method used to present course or objective.
+Given an objective that a student want to complete.
+1. Choose any required_objectives or taxonomy that are not completed.
+2. If Taxonomy present taxonomy assessement or activity until complete.
+3. If required_objective then do the same process again until a taxonomy is chosen.
+4. If circular objective then chose last node before circular.
+
+Learning methods
+1. Random (Chose a random required_objective, taxonomy)
+2. Most effective (chose the taxonomy, required_objective that are linked to the most other objectives)
+
+How do we determine if an assessment is complete?
+Assessment or Activity
+When triggering an activity we send it.
+1. Current repetition
+2. Current retention
+
+Assessment should from the repetition and retention data determine the necessary activities necessary
+to increase the repetition rate.
+Eg.
+Memorise Alphabet
+1. 1st repetition - Phonetic alphabet display alphabet
+2. 2nd repetition - Query alphabet - 15 minutes, if incorrect then display correct phonetic.
+3. 5+ repetition - If gueses are still <50% display whole alphabet
+6. 10+ repetition - On retention >80% only query for 1 minute.
+
+
+It then need to independently return
+1. Retention
+
+meta_memory
+1. Retention
+2. Stability
+3. List of activity Dates
+4. Associated assessment
+
+taxonomy_objectives
+For each taxonomy attached to learning objective determine
+1. Required retention
+2. Required stability
+
+learning_objectives (Just a set of texonomy_objectives)
+1. Required retention
+2. Required stability
+
+(Taxonmy list vs assessment list?)
+What vs how!
+In traditional (Learning Management Systems) and teaching the learning objective is broken up into a taxonomy and the
+taxonomy into a set of activities and assessments. This is then shortened to just a set of activities/assessments to
+reach a certain learning objective.
+
+We have taken this concept and turned it on it's head. for a learning objective we define the taxonomy matrix and the
+required competency per cell. Any activity or assessment can contribute to that cell. So you could have multiple
+assessments and activities for each learning objective tailored to the specific students interest and ability.
+
