@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_objective_objective,objective.objective,model_objective_objective,,1,0,0,0
-access_cognitive_dimension,objective.cognitive_dimension,model_objective_cognitive_dimension,,1,1,1,1

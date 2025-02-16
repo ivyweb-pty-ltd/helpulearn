@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- top menu for the help u learn module -->
+        <menuitem name="HelpULearn" id="helpulearn_root_menu"/>
+        <menuitem name="Settings" id="helpulearn_settings_menu" parent="helpulearn_root_menu"/>
+    </data>
+</odoo>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="ModelName_form_view" model="ir.ui.view">
+            <field name="name">HelpULearn Unit Form</field>
+            <field name="model">helpulearn.unit</field>
+            <field name="arch" type="xml">
+                <form string="Units">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1>
+                                <field name="name" placeholder="Name"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <field name="parent_unit_id"/>
+                        </group>
+                        <notebook>
+                            <page string="Components">
+                            <field name="child_unit_ids"/>
+                            </page>
+                            <page string="Bits">
+                                <field name="bit_ids">
+                                    <list>
+                                        <field name="next_review"/>
+                                        <field name="name"/>
+                                        <field name="current_state"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Reviews">
+                                <field name="review_ids">
+                                    <list>
+                                        <field name="review_date"/>
+                                        <field name="state_before"/>
+                                        <field name="state_after"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="ModelName_tree_view" model="ir.ui.view">
+            <field name="name">ProjectName.ModelName.tree</field>
+            <field name="model">helpulearn.unit</field>
+            <field name="arch" type="xml">
+                <list string="Units">
+                    <field name="name"/>
+                    <field name="parent_unit_id"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="unit_act_window" model="ir.actions.act_window">
+            <field name="name">Units</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">helpulearn.unit</field>
+            <field name="view_mode">list,form</field>
+            <field name="target">current</field>
+        </record>
+
+        <menuitem name="Units" id="unit_menu" parent="helpulearn_root_menu" action="unit_act_window"/>
+
+    </data>
+</odoo>

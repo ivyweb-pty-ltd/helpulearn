@@ -28,16 +28,21 @@ class HULObjective(models.Model):
 
     name = fields.Char("Name")  # A short name for the objective
     description = fields.Text("Description")  # Longer name for the objective
-    objective_type_id = fields.Many2one('Objective Type', 'helpulearn.objective.type')
+    objective_type_id = fields.Many2one('helpulearn.objective.type', 'Objective Type')
     taxonomy_ids = fields.Many2many('helpulearn.taxonomy')
-    target_objective_ids = fields.Many2many('helpulearn.objective', 'required_objectives_ids')
-    # Objectives that use this objective as a requirement (inverse of required)
-    required_objective_ids = fields.Many2many('helpulearn.objective', 'target_objective_ids',
-                                              string='Required Objectives')
-    # Objectives that are part of this objective
-    potential_objective_ids = fields.Many2many('helpulearn.objective', 'required_objective_ids',
+    # Objectives target
+    target_objective_ids = fields.Many2many('helpulearn.objective', relation='related_objectives',
+                                            string='Target Objectives',
+                                            column1='required_objective_id', column2='target_objective_id')
+    # Objectives required
+    required_objective_ids = fields.Many2many('helpulearn.objective', relation='related_objectives',
+                                              string='Required Objectives',
+                                              column1='target_objective_id', column2='required_objective_id')
+    # Objectives that can be linked from here, related but not part of
+    potential_objective_ids = fields.Many2many('helpulearn.objective', relation='potential_objectives',
+                                               column1='related_objective_id', column2='potential_objective_id',
                                                string='Potential Objectives')
-    # Potential next objectives but not necessarily a child or parent.
+
 
 class HULObjectiveType(models.Model):
     """Objective Type - Global, Educational, Instructional"""

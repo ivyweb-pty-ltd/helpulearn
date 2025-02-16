@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="unit_type_tree_view" model="ir.ui.view">
+            <field name="name">helpulearn.unit_type.tree</field>
+            <field name="model">helpulearn.unit_type</field>
+            <field name="arch" type="xml">
+                <list string="Unit Type">
+                    <field name="display_name"/>
+                    <field name="name"/>
+                    <field name="parent_unit_type_id"/>
+                    <field name="child_unit_types_ids"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="unit_type_act_window" model="ir.actions.act_window">
+            <field name="name">Unit Type Window</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">helpulearn.unit_type</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem name="Unit Type" id="unit_type_menu" parent="helpulearn_settings_menu" action="unit_type_act_window"/>
+
+    </data>
+</odoo>

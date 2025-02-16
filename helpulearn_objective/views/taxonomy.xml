@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="helpulearn_taxonomy_tree_view" model="ir.ui.view">
+            <field name="name">helpulearn.taxonomy.tree</field>
+            <field name="model">helpulearn.taxonomy</field>
+            <field name="arch" type="xml">
+                <list string="Taxonomy">
+                    <field name="name"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="helpulearn_taxonomy_form_view" model="ir.ui.view">
+            <field name="name">helpulearn.taxonomy.form</field>
+            <field name="model">helpulearn.taxonomy</field>
+            <field name="arch" type="xml">
+                <form string="Taxonomy">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group name="Knowledge">
+                            <field name="knowledge_dimension_id"/>
+                            <field name="knowledge_type_id"/>
+                        </group>
+                        <group name="Cognition">
+                            <field name="cognitive_dimension_id"/>
+                            <field name="cognitive_type_id"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="helpulearn_taxonomy_act_window" model="ir.actions.act_window">
+            <field name="name">Taxonomy</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">helpulearn.taxonomy</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem name="Taxonomy" id="taxonomy_menu" parent="helpulearn.menu_root" action="helpulearn_taxonomy_act_window"/>
+
+    </data>
+</odoo>
