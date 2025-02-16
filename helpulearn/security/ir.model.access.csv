@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+helpulearn_bit,helpulearn_bit,model_helpulearn_bit,base.group_user,1,1,1,1
+helpulearn_unit,helpulearn_unit,model_helpulearn_unit,base.group_user,1,1,1,1
+helpulearn_unit_type,helpulearn_unit_type,model_helpulearn_unit_type,base.group_user,1,1,1,1
+helpulearn_review,helpulearn_review,model_helpulearn_review,base.group_user,1,1,1,1
