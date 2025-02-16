@@ -1,0 +1,12 @@
+id,name,knowledge_dimension_id:id
+kst1,Knowledge of terminology,kd1
+kst2,Knowledge of specific details and elements,kd1
+kst3,Knowledge of classifications and categories,kd2
+kst4,Knowledge of principles and generalizations,kd2
+kst5,"Knowledge of theories, models, and structures",kd2
+kst6,Knowledge of subject-specific skills and algorithms,kd3
+kst7,Knowledge of techniques and methods,kd3
+kst8,Knowledge of criteria for determining procedures,kd3
+kst9,Strategic knowledge,kd4
+kst10,Knowledge about cognitive tasks,kd4
+kst11,Self-knowledge,kd4
