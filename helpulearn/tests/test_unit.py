@@ -19,7 +19,7 @@ class test_unit(TransactionCase):
 
     def test_create_unit(self):
         self.assertEqual(self.unit.name, 'Course')
-        self.assertEqual(self.unit.display_name, '/Course')
+        self.assertEqual(self.unit.display_name, 'Course')
 
     def test_with_one_parent(self):
         parent_unit = self.env['helpulearn.unit'].create({
@@ -28,7 +28,7 @@ class test_unit(TransactionCase):
         self.unit.parent_unit_id = parent_unit
         self.assertEqual(self.unit.parent_unit_id, parent_unit)
         self.assertEqual(parent_unit.child_unit_ids, self.unit)
-        self.assertEqual(self.unit.display_name, "/Parent Course/Course")
+        self.assertEqual(self.unit.display_name, "Parent Course>Course")
 
     def test_with_many_parents(self):
         current_unit = self.unit
@@ -38,7 +38,7 @@ class test_unit(TransactionCase):
             })
             current_unit.parent_unit_id = parent_unit
             current_unit = parent_unit
-        self.assertEqual(self.unit.display_name, "/Parent Course 1/Parent Course 0/Course")
+        self.assertEqual(self.unit.display_name, "Parent Course 1>Parent Course 0>Course")
 
     def test_with_more_than_two_parents(self):
         current_unit = self.unit
@@ -48,4 +48,4 @@ class test_unit(TransactionCase):
             })
             current_unit.parent_unit_id = parent_unit
             current_unit = parent_unit
-        self.assertEqual(self.unit.display_name, "../Parent Course 1/Parent Course 0/Course")
+        self.assertEqual(self.unit.display_name, "Parent Course 3>Parent Course 2>Parent Course 1>Parent Course 0>Course")
