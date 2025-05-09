@@ -10,8 +10,8 @@
                     <field name="unit_id"/>
                     <field name="bit_id"/>
                     <field name="review_date"/>
-                    <field name="state_before" widget="percentage"/>
-                    <field name="state_after" widget="percentage"/>
+                    <field name="state"/>
+                    <field name="retention_after" widget="percentage"/>
                 </list>
             </field>
         </record>

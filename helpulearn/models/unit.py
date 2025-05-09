@@ -6,13 +6,33 @@ class HelpULearnUnit(models.Model):
     _description = (
         'Unit is just a hierarchical structure used to group several learning objectives, it could refer to '
         'course, unit inside a course or any other way that learning objectives are grouped together')
+    _parent_store = True
 
     name = fields.Char(required=True)
     unit_type_id = fields.Many2one('helpulearn.unit_type', 'Unit Type')
-    parent_unit_id = fields.Many2one('helpulearn.unit', 'Parent Unit')
-    child_unit_ids = fields.One2many('helpulearn.unit', 'parent_unit_id', 'Child Units')
+    parent_id = fields.Many2one('helpulearn.unit', 'Parent Unit')
+    parent_path = fields.Char(index=True)
+    child_unit_ids = fields.One2many('helpulearn.unit', 'parent_id', 'Child Units')
     bit_ids = fields.One2many('helpulearn.bit', 'unit_id', 'Bits')
     review_ids = fields.One2many('helpulearn.review', 'unit_id', 'Reviews')
+
+    @api.constrains('parent_id')
+    def _check_parent_not_self(self):
+        for rec in self:
+            current= rec.parent_id
+            while current:
+                if current.id == rec.id:
+                    raise models.ValidationError("A unit cannot be its own parent.")
+                current = current.parent_id
+
+    def _get_all_child_unit_ids(self):
+        """Recursively get all child unit IDs"""
+        child_ids = []
+        for record in self:
+            child_ids = record.child_unit_ids.mapped('id')
+            for child in record.child_unit_ids:
+                child_ids += child._get_all_child_unit_ids()
+            return child_ids
 
     def _compute_display_name(self):
         # Runs through the hierarchy and combines them using a / in between
@@ -21,10 +41,10 @@ class HelpULearnUnit(models.Model):
             if not unit.name:
                 unit.display_name = ""
                 continue
-            temp_parent_unit = unit.parent_unit_id
+            temp_parent_unit = unit.parent_id
             while temp_parent_unit:
                 temp_display_name = temp_parent_unit.name + ">" + temp_display_name
-                temp_parent_unit = temp_parent_unit.parent_unit_id
+                temp_parent_unit = temp_parent_unit.parent_id
 
             unit.display_name = temp_display_name
 
@@ -38,13 +58,13 @@ class HelpULearnUnit(models.Model):
             'target': 'current',
         }
 
-    def _get_all_child_units(self):
-        """Retrieve all descendant units of the current record"""
-        all_units = self.env['helpulearn.unit'].browse()
-        for unit in self:
-            all_units |= unit.child_unit_ids
-            all_units |= unit.child_unit_ids._get_all_child_units()  # Recursively add children
-        return all_units
+    # def _get_all_child_units(self):
+    #     """Retrieve all descendant units of the current record"""
+    #     all_units = self.env['helpulearn.unit'].browse()
+    #     for unit in self:
+    #         all_units |= unit.child_unit_ids
+    #         all_units |= unit.child_unit_ids._get_all_child_units()  # Recursively add children
+    #     return all_units
 
     def name_get(self):
         """Override name_get to return (id, display_name)"""
@@ -53,47 +73,47 @@ class HelpULearnUnit(models.Model):
             result.append((record.id, record.display_name or record.name))
         return result
 
-    @api.model
-    def name_search(self, name='', args=None, operator='ilike', limit=100):
-        if args is None:
-            args = []
-        if name:
-            domain = ['|', ('name', operator, name), ('display_name', operator, name)]
+    # @api.model
+    # def name_search(self, name='', args=None, operator='ilike', limit=100):
+    #     if args is None:
+    #         args = []
+    #     if name:
+    #         domain = ['|', ('name', operator, name), ('display_name', operator, name)]
+    #
+    #         # Find matching parent and child records
+    #         matching_units = self.search(domain + args, limit=limit)
+    #
+    #         # Include child units of matched records
+    #         all_units = matching_units
+    #         for unit in matching_units:
+    #             all_units |= self.env['helpulearn.unit'].browse(unit._get_all_child_unit_ids())
+    #
+    #         return all_units.name_get()
+    #     return super(HelpULearnUnit, self).name_search(name=name, args=args, operator=operator, limit=limit)
 
-            # Find matching parent and child records
-            matching_units = self.search(domain + args, limit=limit)
-
-            # Include child units of matched records
-            all_units = matching_units
-            for unit in matching_units:
-                all_units |= unit._get_all_child_units()
-
-            return all_units.name_get()
-        return super(HelpULearnUnit, self).name_search(name=name, args=args, operator=operator, limit=limit)
-
-    @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        """Extend default search to include sub-units when filtering by name or display_name."""
-        name_filter = None
-        for arg in args:
-            if isinstance(arg, (list, tuple)) and arg[0] in ['name', 'display_name'] and arg[1] in ['ilike', '=like', 'like']:
-                name_filter = arg
-                break
-
-        if name_filter:
-            name_field, operator, value = name_filter
-            domain = ['|', (name_field, operator, value), ('display_name', operator, value)]
-
-            # Find all matching units
-            matching_units = super().search(domain + args, offset=offset, limit=limit, order=order)
-
-            # Find child units recursively
-            all_units = matching_units
-            for unit in matching_units:
-                all_units |= unit._get_all_child_units()
-
-            return all_units if not count else len(all_units)
-
-        return super().search(args, offset=offset, limit=limit, order=order)
+    # @api.model
+    # def search(self, args, offset=0, limit=None, order=None, count=False):
+    #     """Extend default search to include sub-units when filtering by name or display_name."""
+    #     name_filter = None
+    #     for arg in args:
+    #         if isinstance(arg, (list, tuple)) and arg[0] in ['name', 'display_name'] and arg[1] in ['ilike', '=like', 'like']:
+    #             name_filter = arg
+    #             break
+    #
+    #     if name_filter:
+    #         name_field, operator, value = name_filter
+    #         domain = ['|', (name_field, operator, value), ('display_name', operator, value)]
+    #
+    #         # Find all matching units
+    #         matching_units = super().search(domain + args, offset=offset, limit=limit, order=order)
+    #
+    #         # Find child units recursively
+    #         all_units = matching_units
+    #         for unit in matching_units:
+    #             all_units |= self.env['helpulearn.unit'].browse(unit._get_all_child_unit_ids())
+    #
+    #         args.append(('id', 'in', all_units.ids))
+    #
+    #     return super().search(args, offset=offset, limit=limit, order=order)
 
 # TODO: Create menus for unit

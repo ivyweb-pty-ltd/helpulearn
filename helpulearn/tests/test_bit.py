@@ -18,8 +18,8 @@ class TestBit(TransactionCase):
 
         self.bit.review_ids = self.env['helpulearn.review'].create({
             'bit_id': self.bit.id,
-            'state_before': 0.5,
-            'state_after': 0.8,
+            'retention_before': 0.5,
+            'retention_after': 0.8,
         })
 
         self.assertEqual(self.bit.number_of_reviews, 1)
@@ -27,9 +27,10 @@ class TestBit(TransactionCase):
     def test_bit_next_review(self):
         self.bit.review_ids = self.env['helpulearn.review'].create({
             'bit_id': self.bit.id,
-            'state_before': 0.5,
-            'state_after': 0.8,
-            'review_date': date(2025,2,1)
+            'retention_before': 0.5,
+            'retention_after': 0.8,
+            'review_date': date(2025,2,1),
+            'state': 'reviewing'
         })
 
         last_review = self.bit.last_review

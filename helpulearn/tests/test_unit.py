@@ -25,8 +25,8 @@ class test_unit(TransactionCase):
         parent_unit = self.env['helpulearn.unit'].create({
             'name': 'Parent Course',
         })
-        self.unit.parent_unit_id = parent_unit
-        self.assertEqual(self.unit.parent_unit_id, parent_unit)
+        self.unit.parent_id = parent_unit
+        self.assertEqual(self.unit.parent_id, parent_unit)
         self.assertEqual(parent_unit.child_unit_ids, self.unit)
         self.assertEqual(self.unit.display_name, "Parent Course>Course")
 
@@ -36,7 +36,7 @@ class test_unit(TransactionCase):
             parent_unit = self.env['helpulearn.unit'].create({
                 'name': 'Parent Course %s' % i,
             })
-            current_unit.parent_unit_id = parent_unit
+            current_unit.parent_id = parent_unit
             current_unit = parent_unit
         self.assertEqual(self.unit.display_name, "Parent Course 1>Parent Course 0>Course")
 
@@ -46,6 +46,21 @@ class test_unit(TransactionCase):
             parent_unit = self.env['helpulearn.unit'].create({
                 'name': 'Parent Course %s' % i,
             })
-            current_unit.parent_unit_id = parent_unit
+            current_unit.parent_id = parent_unit
             current_unit = parent_unit
         self.assertEqual(self.unit.display_name, "Parent Course 3>Parent Course 2>Parent Course 1>Parent Course 0>Course")
+
+    def test_get_all_child_unit_ids(self):
+        parent_unit = self.env['helpulearn.unit'].create({
+            'name': 'Parent Course',
+        })
+        child_unit1 = self.env['helpulearn.unit'].create({
+            'name': 'Child Course 1',
+            'parent_id': parent_unit.id
+        })
+        child_unit2 = self.env['helpulearn.unit'].create({
+            'name': 'Child Course 2',
+            'parent_id': child_unit1.id
+        })
+        all_child_units = parent_unit._get_all_child_unit_ids()
+        self.assertEqual(all_child_units, [child_unit1.id, child_unit2.id])

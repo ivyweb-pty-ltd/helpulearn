@@ -8,7 +8,7 @@
             <field name="arch" type="xml">
                 <form string="Units">
                     <sheet>
-                        <field name="parent_unit_id"/>
+                        <field name="parent_id" placeholder="Parent"/>
                         <div class="oe_title">
                             <label for="name"/>
                             <h1>
@@ -16,6 +16,7 @@
                             </h1>
                         </div>
                         <group>
+                            <field name="unit_type_id"/>
                         </group>
                         <notebook>
                             <page string="Components">
@@ -31,7 +32,7 @@
                                     <list>
                                         <field name="next_review"/>
                                         <field name="name"/>
-                                        <field name="current_state"/>
+                                        <field name="current_state" widget="percentage"/>
                                     </list>
                                 </field>
                             </page>
@@ -40,8 +41,8 @@
                                     <list>
                                         <field name="review_date"/>
                                         <field name="review_duration" widget="float_time"/>
-                                        <field name="state_before"/>
-                                        <field name="state_after"/>
+                                        <field name="retention_before"/>
+                                        <field name="retention_after"/>
                                     </list>
                                 </field>
                             </page>
@@ -59,7 +60,7 @@
                 <list string="Units">
                     <button type="object" string="Follow" name="open_unit"/>
                     <field name="name"/>
-                    <field name="parent_unit_id"/>
+                    <field name="parent_id"/>
                 </list>
             </field>
         </record>
@@ -79,9 +80,9 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="name"/>
-                    <field name="parent_unit_id"/>
+                    <field name="parent_id"/>
                     <field name="child_unit_ids"/>
-                    <filter string="Top-Level Units" name="no_parent" domain="[('parent_unit_id', '=', False)]"/>
+                    <filter string="Top-Level Units" name="no_parent" domain="[('parent_id', '=', False)]"/>
                 </search>
             </field>
         </record>

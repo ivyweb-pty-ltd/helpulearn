@@ -5,7 +5,7 @@ import math
 
 class HelpULearnBit(models.Model):
     _name = 'helpulearn.bit'
-    _description = 'Describes a bit of information that can be used to create a learning objective'
+    _description = 'Bit of information'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'next_review,sequence'
 
@@ -20,7 +20,8 @@ class HelpULearnBit(models.Model):
         [('new', 'New'), ('learning', 'Learning'), ('reviewing', 'Reviewing'), ('mastered', 'Mastered'),
          ('archived', 'Archived')], 'State', default='new', tracking=True
     )
-    next_review = fields.Date('Next Review Date', compute="_calculate_review_agg", store=True, readonly=False)
+    next_review = fields.Date('Next Review Date', compute="_calculate_review_agg", store=True, readonly=False,
+                              recursive=True)
     manual_review = fields.Date(
         'Manual Review Date')  # TODO: The manual review date that the student want to review overriding normal review.
     current_state = fields.Float('Current State',
@@ -29,7 +30,8 @@ class HelpULearnBit(models.Model):
     last_review = fields.Date('Last Review Date',
                               compute='_last_review',
                               store=True)  # TODO: Returns the last date this work has been reviewed
-    current_decay_rate = fields.Float('Decay Rate',default=0.035)  # TODO: The Decay rate adjusted on each revision
+    current_decay_rate = fields.Float('Decay Rate', default=0.223,
+                                      compute="_calculate_current_decay_rate")  # TODO: The Decay rate adjusted on each revision
     current_alpha = fields.Float('Alpha',
                                  default=0.5)  # TODO: How much the decay rate will be adjusted on each revision
     target_date = fields.Date('Target Date')  # TODO: The date the student wants to have this information mastered
@@ -73,34 +75,33 @@ class HelpULearnBit(models.Model):
                 last_review = bit.review_ids.search([('bit_id', '=', bit.id)], order='review_date desc', limit=1)
                 bit.state = last_review.state
 
-    @api.depends('review_ids', 'review_ids.retention_after', 'review_ids.review_date')
+    @api.depends('review_ids', 'review_ids.retention_after', 'review_ids.review_date', 'current_decay_rate')
     def _calculate_current_state(self):
-        """Calculate the weighted average of the retention after."""
-        # TODO: Calculate the estimated retention rather than the weighted average based on the current date.
+        """Estimate current retention based on the last review's retention and decay."""
         for bit in self:
-            if len(bit.review_ids) == 0:
+            review_ids = bit.review_ids.filtered(lambda r: r.state == 'reviewing')
+
+            if not review_ids:
                 bit.current_state = 0
                 continue
-            total_weight = 0
-            total_retention = 0
-            review_ids = bit.review_ids.search([('bit_id', '=', bit._origin.id), ('state', '=', 'reviewing')],
-                                               order='review_date asc')
-            # Weight is the length between the reviews
-            if review_ids and len(review_ids) > 1:
-                # Calculate the weighted retention based on percentage after review and the time to review.
-                for i in range(1, len(review_ids)):
-                    weight = (review_ids[i].review_date - review_ids[i - 1].review_date).days
-                    total_weight += weight
-                    total_retention += review_ids[i].retention_after * weight
-            elif len(review_ids) == 1:
-                total_retention = review_ids[0].retention_after
-                total_weight = 1
-            else:
-                total_retention = 0
-                total_weight = 1
-            if total_weight == 0:
-                total_weight = 1
-            bit.current_state = total_retention / total_weight
+
+            # Find the most recent review
+            latest_review = review_ids.sorted(key=lambda r: r.review_date)[-1]
+
+            days_since_review = (fields.Date.today() - latest_review.review_date).days
+            if days_since_review < 0:
+                days_since_review = 0  # Safety for future-dated reviews
+
+            decay_rate = bit.current_decay_rate or 0.223  # Fallback decay rate if missing
+
+            # Starting point is retention_after immediately after review
+            starting_retention = latest_review.retention_after
+
+            # Apply forgetting curve decay
+            retention_now = starting_retention * math.exp(-decay_rate * days_since_review)
+
+            # Convert back to percentage scale and clamp between 0–100%
+            bit.current_state = max(0.0, min(1.0, retention_now))
 
     @api.depends('review_ids')
     def _calculate_number_of_reviews(self):
@@ -127,11 +128,11 @@ class HelpULearnBit(models.Model):
         for bit in self:
             bit.manual_review = bit.next_review
 
-    @api.depends('review_ids', 'state', 'manual_review', 'review_ids.state')
+    @api.depends('review_ids', 'state', 'manual_review', 'review_ids.state', 'review_ids.review_date')
     def _calculate_review_agg(self):
         for bit in self:
 
-            if bit.manual_review and (not bit.last_review or bit.manual_review >= bit.last_review):
+            if bit.manual_review and (not bit.last_review or bit.manual_review > bit.last_review):
                 bit.next_review = bit.manual_review
             elif bit.state == 'new' and not bit.next_review:
                 bit.next_review = fields.Date.today()
@@ -140,48 +141,85 @@ class HelpULearnBit(models.Model):
             elif bit.state == 'learning' and bit.last_review:
                 bit.next_review = bit.last_review + timedelta(days=1)
             elif (bit.state == 'reviewing' or bit.state == 'mastered') and bit.last_review:
-                current_percent = bit.current_state
-                if current_percent <= bit.target_state:
-                    factor = current_percent / bit.target_state
+                decay_rate = bit.current_decay_rate or 0.035
+                target_state = bit.target_state or 0.8
+
+                if decay_rate <= 0:
+                    decay_rate = 0.035
+                if target_state <= 0 or target_state >= 1:
+                    target_state = 0.8
+
+                # Get the latest review
+                reviews = \
+                bit.review_ids.filtered(lambda r: r.state == 'reviewing' or r.state == 'mastered').sorted(key=lambda r: r.review_date)
+                if reviews:
+                    last_review = reviews[-1]
                 else:
-                    factor = 2 - (1 - current_percent) / (1 - bit.target_state)
-                bit.next_review = bit.last_review + max(timedelta(days=1),
-                                                        timedelta(days=2 ** (bit.number_of_reviews - 1)) * factor)
+                    continue
+
+                start_retention = last_review and last_review.retention_after or 1.0  # retention right after last review
+
+                if start_retention <= 0 or start_retention > 1:
+                    start_retention = 1.0  # fallback safety
+
+                try:
+                    ratio = target_state / start_retention
+                    if ratio > 1:
+                        days_to_target = 1  # Already below target, review tomorrow
+                    else:
+                        days_to_target = -math.log(ratio) / decay_rate
+                        days_to_target = max(1, round(days_to_target))
+                except (ValueError, ZeroDivisionError):
+                    days_to_target = 1
+
+                bit.next_review = last_review.review_date + timedelta(days=days_to_target)
 
     @api.depends('review_ids', 'review_ids.retention_after', 'review_ids.review_date')
     def _calculate_current_decay_rate(self):
-        """Estimate the current decay rate based on past reviews and forgetting curve fitting."""
+        """Estimate the decay rate based on sequential review prediction, adjusting decay rate after each review."""
+        DEFAULT_DECAY_RATE = 0.223  # Start fast forgetting for new bits
+
         for bit in self:
-            review_ids = bit.review_ids.filtered(lambda r: r.state == 'reviewing')
+            review_ids = bit.review_ids.filtered(lambda r: r.state == 'reviewing' or r.state == 'mastered')
 
             if not review_ids:
-                bit.current_decay_rate = 0.035  # Default starting decay rate if no reviews
+                bit.current_decay_rate = DEFAULT_DECAY_RATE
                 continue
 
-            total_decay = 0
-            decay_count = 0
+            review_ids = review_ids.sorted(key=lambda r: r.review_date)
+
+            decay_rate = DEFAULT_DECAY_RATE  # Start fresh for this Bit
+            previous_review = None
 
             for review in review_ids:
-                days_since_review = (fields.Datetime.now() - review.review_date).days
-                if days_since_review <= 0:
-                    continue  # Skip future reviews or reviews today
+                if previous_review:
+                    days_between = (review.review_date - previous_review.review_date).days
+                    if days_between <= 0:
+                        days_between = 1  # avoid divide by zero
 
-                retention = review.retention_after  # Convert to 0–1 scale
+                    previous_retention = previous_review.retention_after
+                    current_retention = review.retention_after
 
-                if retention <= 0 or retention >= 1:
-                    continue  # Skip impossible values
+                    if previous_retention <= 0 or previous_retention > 1 or current_retention <= 0 or current_retention > 1:
+                        previous_review = review
+                        continue
 
-                k_estimated = -math.log(retention) / days_since_review
+                    # Predict expected retention using current decay_rate (before adjustment)
+                    expected_retention = previous_retention * math.exp(-decay_rate * days_between)
 
-                total_decay += k_estimated
-                decay_count += 1
+                    if current_retention >= expected_retention:
+                        decay_rate = decay_rate * 0.5
+                    else:
+                        # Weaker memory than expected → increase decay rate
+                        decay_rate = decay_rate * 1.1
 
-            if decay_count == 0:
-                bit.current_decay_rate = 0.035  # Safe fallback
-            else:
-                estimated_decay = total_decay / decay_count
-                # Clamp decay rate between 0.00012 and 0.1
-                bit.current_decay_rate = min(max(estimated_decay, 0.00012), 0.1)
+                    # Update decay rate immediately after each review
+                    decay_rate = min(max(decay_rate, 0.00012), 0.4)
+
+                previous_review = review
+
+            # After all reviews processed, set final decay rate
+            bit.current_decay_rate = decay_rate
 
 # TODO: Add a method to specify question and manage questions to be asked or tasks to be accomplished in each review
 # calculate based on target date and reviews to target date

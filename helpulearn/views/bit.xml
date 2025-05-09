@@ -12,7 +12,7 @@
                     <sheet>
                         <div class="oe_title">
                             <group colspan="2" full_width="1">
-                                <field name="unit_id" colspan="6"/>
+                                <field name="unit_id" colspan="3"/>
                             </group>
                             <h1>
                                 <field name="name" placeholder="Title"/>
@@ -22,15 +22,16 @@
                             <h3>
                                 <field name="description" placeholder="Description"/>
                             </h3>
+                            <field name="current_state" widget="percentage"/>
                         </group>
                         <group>
                             <group>
-                                <field name="next_review"/>
+                                <field name="manual_review"/>
                                 <field name="target_date"/>
                                 <field name="target_state" widget="percentage"/>
-
                             </group>
                             <group>
+                                <field name="next_review"/>
                                 <field name="number_of_reviews"/>
                             </group>
                         </group>
@@ -40,11 +41,11 @@
                             </page>
                             <page string="Review">
                                 <field name="review_ids">
-                                    <list string="Review" editable="top" edit="true" create="true" delete="true">
+                                    <list string="Review" editable="bottom" edit="true" create="true" delete="true">
                                         <field name="review_date"/>
+                                        <field name="state"/>
                                         <field name="review_duration" widget="float_time"/>
-                                        <field name="state_before" widget="percentage"/>
-                                        <field name="state_after" widget="percentage"/>
+                                        <field name="retention_after" widget="percentage"/>
                                     </list>
                                 </field>
                             </page>
@@ -65,7 +66,7 @@
                     <field name="name"/>
                     <field name="unit_id"/>
                     <field name="number_of_reviews"/>
-                    <field name="current_state"/>
+                    <field name="current_state" avg="Average" widget="percentage"/>
                 </list>
 
             </field>
@@ -81,7 +82,9 @@
                     <field name="current_state"/>
                     <field name="next_review"/>
                     <field name="target_date"/>
+                    <field name="unit_id" string="Unit and Subunits" filter_domain="[('unit_id','child_of',self)]"/>
                     <filter name="active_bits" string="Active Bits" domain="[('state', '!=', 'archived')]"/>
+                    <filter name="filter_due_and_active" string="Due Today &amp; Active" domain="['&amp;', ('state', '!=', 'archived'), ('next_review', '!=', False), ('next_review', '&lt;=', (context_today()))]"/>
                     <group expand="0" string="Group By">
                         <filter name="group_by_next_review_date" string="Next Review Date"
                                 context="{'group_by':'next_review'}"/>
@@ -115,6 +118,7 @@
                                     <div><field name="state"/></div>
                                     <div>Next Review: <field name="next_review"/></div>
                                     <div><field name="unit_id"/></div>
+                                    <div><field name="current_state" widget="percentage"/></div>
                                 </div>
                             </div>
                         </t>
@@ -129,7 +133,7 @@
             <field name="res_model">helpulearn.bit</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="target">current</field>
-            <field name="context">{'search_default_active_bits': 1}</field>
+            <field name="context">{'search_default_filter_due_and_active': 1}</field>
         </record>
 
         <menuitem name="Bits" id="helpulearn_bit_menu" parent="helpulearn_root_menu"
